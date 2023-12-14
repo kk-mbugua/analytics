@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package pipelines;
+
+
+option go_package = "./pb"; 
+
+message Pipelines {
+
+}
+
+message GetPipelinesRequest {
+   string organisationId = 1;
+}
+message GetPipelinesResponse {
+    repeated Pipelines pipelines = 1;
+}
+service PipelineService {
+    rpc GetPipelines(GetPipelinesRequest) returns (GetPipelinesResponse) {}
+}
