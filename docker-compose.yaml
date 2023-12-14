@@ -10,9 +10,9 @@ services:
     env_file: 
       - ./envs/local.env
     depends_on:
-      - crm-db
+      - db
     links: 
-      - crm-db
+      - db
 
   envoy-proxy: 
     image: envoyproxy/envoy:v1.25-latest # Envoy proxy image version 
@@ -25,12 +25,12 @@ services:
       - grpc-crm-server 
     command: ["envoy", "-c", "/etc/envoy/envoy.yaml"]
   
-  crm-db: 
+  db: 
     image: postgres:alpine
     restart: always 
     environment: 
       - POSTGRES_PASSWORD=pGdBcrM
-      - POSTGRES_DB=crm-svc-crm-db-1
+      - POSTGRES_DB=crm-svc-db-1
       - POSTGRES_USER=root
     ports: 
       - "5433:5433"
