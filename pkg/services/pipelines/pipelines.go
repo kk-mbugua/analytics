@@ -18,6 +18,7 @@ type Pipeline struct {
 	ID          string `gorm:"primary_key;type:uuid"`
 	Name        string `gorm:"not null"`
 	Description string `gorm:"not null"`
+	Stages      []Stage
 }
 
 type Stage struct {
