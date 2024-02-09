@@ -1,12 +1,13 @@
 version: '3.8'  
 
 services:
-  grpc-crm-server:
+
+  grpc-server:
     build: 
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     ports: 
-      - "50056:50056"
+      - "50055:50053"
     env_file: 
       - ./envs/local.env
     depends_on:
@@ -19,10 +20,10 @@ services:
     volumes: 
       - ./envoy.yaml:/etc/envoy/envoy.yaml # Mounting envoy.yaml file to the container 
     ports: 
-      - "8080:8000"
-      - "9901:8001"
-    depends_on: 
-      - grpc-crm-server 
+      - "8081:8081"
+      - "9902:8002"
+    # depends_on: 
+    #   - grpc-server 
     command: ["envoy", "-c", "/etc/envoy/envoy.yaml"]
   
   db: 
@@ -30,12 +31,11 @@ services:
     restart: always 
     environment: 
       - POSTGRES_PASSWORD=pGdBcrM
-      - POSTGRES_DB=crm-svc-db-1
+      - POSTGRES_DB=pipelines-db-1
       - POSTGRES_USER=root
     ports: 
-      - "5433:5433"
+      - "5432:5432"
     volumes: 
       - data:/var/lib/postgresql/data
-
 volumes:
   data: 

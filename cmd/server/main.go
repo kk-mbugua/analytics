@@ -6,8 +6,8 @@ import (
 	"log"
 	"main/cmd/server/config"
 	"main/pkg/db"
+	pipelines "main/pkg/pipelines"
 	"main/pkg/proto/pb"
-	pipelines "main/pkg/services"
 	"net"
 
 	"google.golang.org/grpc"
@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-func unaryInterceptor(
+func UnaryInterceptor(
 	ctx context.Context,
 	req interface{},
 	info *grpc.UnaryServerInfo,
@@ -26,7 +26,7 @@ func unaryInterceptor(
 	return handler(ctx, req)
 }
 
-func streamInterceptor(
+func StreamInterceptor(
 	srv interface{},
 	stream grpc.ServerStream,
 	info *grpc.StreamServerInfo,

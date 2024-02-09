@@ -4,6 +4,17 @@ import (
 	"gorm.io/gorm"
 )
 
+type OwnerType int
+
+const (
+	UNKNOWN      OwnerType = iota
+	TEAM                   = "TEAM"
+	CREATOR                = "CREATOR"
+	BRANCH                 = "BRANCH"
+	DEPARTMENT             = "DEPARTMENT"
+	ORGANISATION           = "ORGANISATION"
+)
+
 type PipelineTypes int
 
 const (
@@ -23,13 +34,15 @@ type Pipeline struct {
 	PipelineStages []Stage
 	PipelineType   PipelineTypes `gorm:"not null"`
 	CustomTypeName string
-	OrganisationID string `gorm:"not null"`
-	SerialNumber   string `gorm:"not null"`
-	CreatedBy      string `gorm:"not null"`
-	UpdatedBy      string `gorm:"not null"`
-	UpdatedAt      string `gorm:"not null"`
-	CreatedAt      string `gorm:"not null"`
-	BranchId       string `gorm:"not null"`
+	OrganisationID string    `gorm:"not null"`
+	SerialNumber   string    `gorm:"not null"`
+	OwnerID        string    `gorm:"not null"`
+	OwnerType      OwnerType `gorm:"not null"`
+	CreatedBy      string    `gorm:"not null"`
+	UpdatedBy      string    `gorm:"not null"`
+	UpdatedAt      string    `gorm:"not null"`
+	CreatedAt      string    `gorm:"not null"`
+	BranchId       string    `gorm:"not null"`
 	DepartmentId   string
 }
 
