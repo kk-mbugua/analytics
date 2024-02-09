@@ -3,57 +3,69 @@ package config
 import (
 	"log"
 	"os"
-	"strconv"
+	"path/filepath"
 
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	Port         int    `mapstructure:"PORT"`
-	JWTSecretKey string `mapstructure:"JWT_SECRET_KEY"`
-	AuthSvcUrl   string `mapstructure:"AUTH_SVC_URL"`
-	PostgresHost string `mapstructure:"POSTGRES_HOST"`
-	PostgresPort string `mapstructure:"POSTGRES_PORT"`
-	PostgresDB   string `mapstructure:"POSTGRES_DB"`
-	PostgresUser string `mapstructure:"POSTGRES_USER"`
-	PostgresPass string `mapstructure:"POSTGRES_PASS"`
+	Port               string `mapstructure:"PORT"`
+	AuthSvcUrl         string `mapstructure:"AUTH_SVC_URL"`
+	OrganisationSvcUrl string `mapstructure:"ORGANISATION_SVC_URL"`
+	ContactSvcUrl      string `mapstructure:"CONTACT_SVC_URL"`
+	JwtSecretKey       string `mapstructure:"JWT_SECRET_KEY"`
+	MailgunAPIKey      string `mapstructure:"MAILGUN_API_KEY"`
+	MailgunDomain      string `mapstructure:"MAILGUN_DOMAIN"`
+	MailgunSender      string `mapstructure:"MAILGUN_SENDER"`
+	PostgresHost       string `mapstructure:"POSTGRES_HOST"`
+	PostgresPort       string `mapstructure:"POSTGRES_PORT"`
+	PostgresDB         string `mapstructure:"POSTGRES_DB"`
+	PostgresUser       string `mapstructure:"POSTGRES_USER"`
+	PostgresPass       string `mapstructure:"POSTGRES_PASS"`
+	Environment        string `mapstructure:"ENVIRONMENT"`
 }
 
 func LoadConfig() (config Config, err error) {
-
-	port, jwtSecretKey, authSvcUrl, postgresHost, postgresPort, postgresDB, postgresUser, postgresPass :=
+	port, jwtSecretKey, authSvcUrl, postgresHost, postgresPort, postgresDB, postgresUser, postgresPass, environment :=
 		os.Getenv("PORT"), os.Getenv("JWT_SECRET_KEY"), os.Getenv("AUTH_SVC_URL"),
 		os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_DB"),
-		os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASS")
+		os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASS"), os.Getenv("ENVIRONMENT")
 
 	if port != "" && jwtSecretKey != "" && authSvcUrl != "" {
 		log.Println("Port is: ", port)
-		config.Port, err = strconv.Atoi(port)
-		if err != nil {
-			log.Fatalf("Error converting PORT to int: %v", err)
-		}
-
-		config.JWTSecretKey = jwtSecretKey
+		config.Port = port
+		config.JwtSecretKey = jwtSecretKey
 		config.AuthSvcUrl = authSvcUrl
 		config.PostgresHost = postgresHost
 		config.PostgresPort = postgresPort
 		config.PostgresDB = postgresDB
 		config.PostgresUser = postgresUser
 		config.PostgresPass = postgresPass
+		config.Environment = environment
 
 		return config, nil
 	}
 
-	viper.AutomaticEnv()
-	config.Port = viper.GetInt("PORT")
-	config.PostgresHost = viper.GetString("POSTGRES_HOST")
-	config.PostgresPort = viper.GetString("POSTGRES_PORT")
-	config.PostgresDB = viper.GetString("POSTGRES_DB")
-	config.PostgresUser = viper.GetString("POSTGRES_USER")
-	config.PostgresPass = viper.GetString("POSTGRES_PASSWORD")
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal("Error getting current working directory:", err)
+	}
 
-	if config.Port == 0 || config.PostgresHost == "" || config.PostgresPort == "" || config.PostgresDB == "" || config.PostgresUser == "" || config.PostgresPass == "" {
-		log.Fatalf("Some required configuration is missing: Missing values: %v", config)
+	configPath := filepath.Join(cwd, "envs")
+
+	viper.AddConfigPath(configPath)
+	viper.SetConfigName("dev.env")
+	viper.SetConfigType("env")
+
+	viper.AutomaticEnv()
+	// Read the config file
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("Error reading config file, %s", err)
+	}
+
+	err = viper.Unmarshal(&config)
+	if err != nil {
+		log.Fatalf("Unable to decode into struct, %v", err)
 	}
 
 	return config, nil

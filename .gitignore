@@ -1,5 +1,10 @@
-*.env
-*.env.local
-*local.env
 
-/envs
+envs/
+envs/dev.env
+*.env
+dev.env
+
+.DS_STORE
+/pkg/proto
+/pkg/proto/
+/pkg/pb/
