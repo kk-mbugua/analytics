@@ -3,8 +3,8 @@ package authclient
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
 	"main/pkg/proto/pb"
+	"os"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -14,7 +14,7 @@ type AuthClient struct {
 	Client pb.AuthServiceClient
 }
 
-func NewAuthClient(serverAddr, certFile, keyFile, caFile string) (*AuthClient, error) {
+func NewAuthClient(serverAddr string, certFile string, keyFile string, caFile string) (*AuthClient, error) {
 	// Load client certificate and key
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
@@ -22,7 +22,7 @@ func NewAuthClient(serverAddr, certFile, keyFile, caFile string) (*AuthClient, e
 	}
 
 	// Load CA certificate
-	caCert, err := ioutil.ReadFile(caFile)
+	caCert, err := os.ReadFile(caFile)
 	if err != nil {
 		return nil, err
 	}

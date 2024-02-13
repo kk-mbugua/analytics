@@ -8,3 +8,5 @@ dev.env
 /pkg/proto
 /pkg/proto/
 /pkg/pb/
+
+/certs/

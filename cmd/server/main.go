@@ -1,10 +1,10 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"main/cmd/server/config"
+	"main/pkg/auth"
 	"main/pkg/db"
 	pipelines "main/pkg/pipelines"
 	"main/pkg/proto/pb"
@@ -15,26 +15,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
-
-func UnaryInterceptor(
-	ctx context.Context,
-	req interface{},
-	info *grpc.UnaryServerInfo,
-	handler grpc.UnaryHandler,
-) (interface{}, error) {
-	log.Println("--> unary interceptor: ", info.FullMethod)
-	return handler(ctx, req)
-}
-
-func StreamInterceptor(
-	srv interface{},
-	stream grpc.ServerStream,
-	info *grpc.StreamServerInfo,
-	handler grpc.StreamHandler,
-) error {
-	log.Println("--> stream interceptor: ", info.FullMethod)
-	return handler(srv, stream)
-}
 
 func loadCertifcate(environment string) credentials.TransportCredentials {
 	switch environment {
@@ -53,8 +33,12 @@ func loadCertifcate(environment string) credentials.TransportCredentials {
 		log.Printf("Loaded staging certificates %v", creds)
 		return creds
 	case "development":
+		creds, err := credentials.NewServerTLSFromFile("certs/dev/server.crt", "certs/dev/server.key")
+		if err != nil {
+			log.Fatalf("Failed to generate credentials %v", err)
+		}
 		log.Printf("Loaded insecure certificates %v", insecure.NewCredentials())
-		return insecure.NewCredentials()
+		return creds
 	default:
 		log.Printf("Loaded insecure certificates %v", insecure.NewCredentials())
 		return insecure.NewCredentials()
@@ -82,11 +66,14 @@ func main() {
 	pipelineStore := pipelines.NewDatabasePipelineStore(db.DB)
 	stageStore := pipelines.NewDatabasePipelineStageStore(db.DB)
 	stageLabelStore := pipelines.NewDatabaseStageLabelStore(db.DB)
+	leadStore := pipelines.NewDatabaseLeadStore(db.DB)
 
 	pipelinesServer := pipelines.NewPipelineServer(pipelineStore)
 	pipelineStagesServer := pipelines.NewPipelineStageServer(stageStore)
 	pipelineStageLabelsServer := pipelines.NewStageLabelServer(stageLabelStore)
-	interceptor := pipelines.NewAuthInterceptor()
+	leadServer := pipelines.NewLeadServer(leadStore)
+
+	interceptor := auth.NewAuthInterceptor()
 
 	grpcServer := grpc.NewServer(
 		grpc.Creds(certificates),
@@ -98,6 +85,7 @@ func main() {
 	pb.RegisterPipelineServiceServer(grpcServer, pipelinesServer)
 	pb.RegisterPipelineStageServiceServer(grpcServer, pipelineStagesServer)
 	pb.RegisterStageLabelServiceServer(grpcServer, pipelineStageLabelsServer)
+	pb.RegisterLeadServiceServer(grpcServer, leadServer)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", configurations.Port))
 	if err != nil {

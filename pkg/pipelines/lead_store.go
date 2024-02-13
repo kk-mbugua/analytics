@@ -8,13 +8,9 @@ import (
 type LeadStore interface {
 	CreateLead(lead *Lead) (*Lead, error)
 	GetLead(id string) (*Lead, error)
-	GetLeadsByOwnerID(ownerID string) ([]*Lead, error)
-	GetLeadsByBranchID(branchID string) ([]*Lead, error)
-	GetLeadsByDepartmentID(departmentID string) ([]*Lead, error)
-	GetLeadsByOrganisationID(organisationID string) ([]*Lead, error)
-	GetLeadsByPipelineID(pipelineID string) ([]*Lead, error)
-	GetLeadsByStageID(stageID string) ([]*Lead, error)
+	GetLeads(page int, pageSize int, filters *LeadFilters) ([]*Lead, error)
 	UpdateLead(lead *Lead) (*Lead, error)
+	MoveLeadToStage(leadID, stageID string) error
 	DeleteLead(id string) error
 }
 
@@ -43,55 +39,19 @@ func (d *DatabaseLeadStore) GetLead(id string) (*Lead, error) {
 	return lead, nil
 }
 
-func (d *DatabaseLeadStore) GetLeadsByOwnerID(ownerID string) ([]*Lead, error) {
+func (d *DatabaseLeadStore) GetLeads(page int, pageSize int, filters *LeadFilters) ([]*Lead, error) {
 	var leads []*Lead
-	result := d.db.Find(&leads, "owner_id = ?", ownerID)
-	if result.Error != nil {
-		return nil, status.Error(404, "Leads not found")
-	}
-	return leads, nil
-}
-
-func (d *DatabaseLeadStore) GetLeadsByBranchID(branchID string) ([]*Lead, error) {
-	var leads []*Lead
-	result := d.db.Find(&leads, "branch_id = ?", branchID)
-	if result.Error != nil {
-		return nil, status.Error(404, "Leads not found")
-	}
-	return leads, nil
-}
-
-func (d *DatabaseLeadStore) GetLeadsByDepartmentID(departmentID string) ([]*Lead, error) {
-	var leads []*Lead
-	result := d.db.Find(&leads, "department_id = ?", departmentID)
-	if result.Error != nil {
-		return nil, status.Error(404, "Leads not found")
-	}
-	return leads, nil
-}
-
-func (d *DatabaseLeadStore) GetLeadsByOrganisationID(organisationID string) ([]*Lead, error) {
-	var leads []*Lead
-	result := d.db.Find(&leads, "organisation_id = ?", organisationID)
-	if result.Error != nil {
-		return nil, status.Error(404, "Leads not found")
-	}
-	return leads, nil
-}
-
-func (d *DatabaseLeadStore) GetLeadsByPipelineID(pipelineID string) ([]*Lead, error) {
-	var leads []*Lead
-	result := d.db.Find(&leads, "pipeline_ids = ?", pipelineID)
-	if result.Error != nil {
-		return nil, status.Error(404, "Leads not found")
-	}
-	return leads, nil
-}
-
-func (d *DatabaseLeadStore) GetLeadsByStageID(stageID string) ([]*Lead, error) {
-
-	var leads []*Lead
-	result := d.db.Find(&leads, "stage_ids = ?", stageID)
+	result := d.db.Scopes(
+		LeadBranch(filters.BranchID),
+		LeadOrganisation(filters.OrganisationID),
+		LeadOwner(filters.OwnerID),
+		LeadDepartment(filters.DepartmentID),
+		LeadTeam(filters.TeamID),
+		LeadPipeline(filters.PipelineID),
+		LeadStage(filters.StageID),
+		LeadContact(filters.ContactID),
+		Paginate(page, pageSize),
+	).Find(&leads, filters)
 	if result.Error != nil {
 		return nil, status.Error(404, "Leads not found")
 	}
@@ -111,5 +71,37 @@ func (d *DatabaseLeadStore) DeleteLead(id string) error {
 	if result.Error != nil {
 		return status.Error(500, "Failed to delete lead")
 	}
+	return nil
+}
+func (d *DatabaseLeadStore) MoveLeadToStage(leadID, stageID string) error {
+	// Get the stage from the database
+	stage := &Stage{}
+	if err := d.db.First(stage, stageID).Error; err != nil {
+		return err
+	}
+
+	// Get the lead from the database
+	lead := &Lead{}
+	if err := d.db.First(lead, leadID).Error; err != nil {
+		return err
+	}
+
+	// Update the lead's stage
+	lead.StageID = stageID
+
+	// Add the custom fields for the new stage
+	for _, field := range stage.CustomFields {
+		lead.CustomFields = append(lead.CustomFields, LeadCustomFields{
+			LeadID:  leadID,
+			FieldID: field.ID,
+			Value:   "",
+		})
+	}
+
+	// Save the lead back to the database
+	if err := d.db.Save(lead).Error; err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -1,4 +1,4 @@
-package pipelines
+package auth
 
 import (
 	"context"
@@ -6,15 +6,6 @@ import (
 
 	"google.golang.org/grpc"
 )
-
-// AuthInterceptor is an interceptor for Authentication and Authorization.
-type AuthInterceptor struct {
-}
-
-// NewAuthInterceptor creates a new instance of AuthInterceptor.
-func NewAuthInterceptor() *AuthInterceptor {
-	return &AuthInterceptor{}
-}
 
 type key int
 
@@ -26,7 +17,12 @@ const (
 	BranchID
 )
 
-// Unary returns a server interceptor for authentication and authorization.
+type AuthInterceptor struct {
+}
+
+func NewAuthInterceptor() *AuthInterceptor {
+	return &AuthInterceptor{}
+}
 func (interceptor *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -35,13 +31,18 @@ func (interceptor *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
 		log.Println("--> unary interceptor: ", info.FullMethod)
-
-		// TODO: implement authentication and authorization
+		requestMetadata, err := AuthRequest(ctx, "accessToken", info.FullMethod)
+		if err != nil {
+			return nil, err
+		}
+		ctx = context.WithValue(ctx, UserID, requestMetadata.UserID)
+		ctx = context.WithValue(ctx, OrganisationID, requestMetadata.OrganisationID)
+		ctx = context.WithValue(ctx, Authorization, requestMetadata.Authorization)
+		ctx = context.WithValue(ctx, RequestAuth, requestMetadata.RequestAuth)
+		ctx = context.WithValue(ctx, BranchID, requestMetadata.BranchID)
 		return handler(ctx, req)
 	}
 }
-
-// Stream returns a server interceptor for streaming calls for authentication and authorization.
 func (interceptor *AuthInterceptor) Stream() grpc.StreamServerInterceptor {
 	return func(
 		srv interface{},

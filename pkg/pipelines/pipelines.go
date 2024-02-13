@@ -28,22 +28,25 @@ const (
 
 type Pipeline struct {
 	gorm.Model
-	ID             string `gorm:"primary_key;type:uuid"`
-	Name           string `gorm:"not null"`
-	Description    string `gorm:"not null"`
-	PipelineStages []Stage
-	PipelineType   PipelineTypes `gorm:"not null"`
-	CustomTypeName string
-	OrganisationID string    `gorm:"not null"`
-	SerialNumber   string    `gorm:"not null"`
-	OwnerID        string    `gorm:"not null"`
-	OwnerType      OwnerType `gorm:"not null"`
-	CreatedBy      string    `gorm:"not null"`
-	UpdatedBy      string    `gorm:"not null"`
-	UpdatedAt      string    `gorm:"not null"`
-	CreatedAt      string    `gorm:"not null"`
-	BranchId       string    `gorm:"not null"`
-	DepartmentId   string
+	ID                    string `gorm:"primary_key;type:uuid"`
+	Name                  string `gorm:"not null"`
+	Description           string `gorm:"not null"`
+	PipelineStages        []Stage
+	PipelineType          PipelineTypes `gorm:"not null"`
+	CustomTypeName        string
+	CustomTypeDescription string
+	OrganisationID        string    `gorm:"not null"`
+	SerialNumber          string    `gorm:"not null"`
+	BranchID              string    `gorm:"not null"`
+	OwnerID               string    `gorm:"not null"`
+	Owner                 OwnerType `gorm:"not null"`
+	CreatedBy             string    `gorm:"not null"`
+	UpdatedBy             string    `gorm:"not null"`
+	UpdatedAt             string    `gorm:"not null"`
+	CreatedAt             string    `gorm:"not null"`
+	BranchId              string    `gorm:"not null"`
+	DepartmentID          string
+	TeamID                string
 }
 
 type Stage struct {
@@ -63,6 +66,11 @@ type Stage struct {
 	CreatedAt      string `gorm:"not null"`
 	BranchId       string `gorm:"not null"`
 	DepartmentId   string
+	TeamID         string
+	OwnerID        string
+	Owner          OwnerType
+	DepartmentID   string
+	CustomFields   []CustomField
 }
 
 type StageLabel struct {
@@ -78,6 +86,15 @@ type StageLabel struct {
 	UpdatedBy      string `gorm:"not null"`
 	UpdatedAt      string `gorm:"not null"`
 	CreatedAt      string `gorm:"not null"`
-	BranchId       string `gorm:"not null"`
+	BranchID       string `gorm:"not null"`
 	DepartmentId   string
+}
+
+type CustomField struct {
+	gorm.Model
+	ID             string `gorm:"primary_key;type:uuid"`
+	Name           string
+	Type           string
+	StageID        string `gorm:"not null;foreignkey:StageID"`
+	OrganisationID string `gorm:"not null"`
 }

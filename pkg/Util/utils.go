@@ -1,8 +1,8 @@
 package utils
 
-func CreateSerialNumber(prefix string, uuid string) (string, error) {
+func CreateSerialNumber(prefix string, uuid string) string {
 	serialNumber := prefix + uuid[24:]
-	return serialNumber, nil
+	return serialNumber
 }
 
 func GetAverage(numbers []float64) float64 {
