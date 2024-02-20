@@ -1,44 +1,24 @@
 package authclient
 
 import (
-	"crypto/tls"
-	"crypto/x509"
+	"fmt"
 	"main/pkg/proto/pb"
-	"os"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 type AuthClient struct {
 	Client pb.AuthServiceClient
 }
 
-func NewAuthClient(serverAddr string, certFile string, keyFile string, caFile string) (*AuthClient, error) {
-	// Load client certificate and key
-	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+func NewAuthClient(serverAddr string) (*AuthClient, error) {
+	// creds, err := credentials.NewServerTLSFromFile("certs/dev/server.crt", "certs/dev/server.key")
+	// if err != nil {
+	// 	return nil, fmt.Errorf("could not load tls cert: %s", err)
+	// }
+	conn, err := grpc.Dial(serverAddr, grpc.WithInsecure())
 	if err != nil {
-		return nil, err
-	}
-
-	// Load CA certificate
-	caCert, err := os.ReadFile(caFile)
-	if err != nil {
-		return nil, err
-	}
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
-
-	// Create TLS configuration with client certificate and CA certificate
-	tlsConfig := &tls.Config{
-		Certificates: []tls.Certificate{cert},
-		RootCAs:      caCertPool,
-	}
-
-	// Dial with TLS credentials
-	conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("did not connect: %v", err)
 	}
 
 	client := pb.NewAuthServiceClient(conn)

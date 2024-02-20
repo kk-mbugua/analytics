@@ -9,11 +9,11 @@ services:
     ports: 
       - "50055:50053"
     env_file: 
-      - ./envs/local.env
-    depends_on:
-      - db
-    links: 
-      - db
+      - ./envs/.env
+    # depends_on:
+    #   - db
+    # links: 
+    #   - db
 
   envoy-proxy: 
     image: envoyproxy/envoy:v1.25-latest # Envoy proxy image version 
@@ -26,16 +26,16 @@ services:
     #   - grpc-server 
     command: ["envoy", "-c", "/etc/envoy/envoy.yaml"]
   
-  db: 
-    image: postgres:alpine
-    restart: always 
-    environment: 
-      - POSTGRES_PASSWORD=pGdBcrM
-      - POSTGRES_DB=pipelines-db-1
-      - POSTGRES_USER=root
-    ports: 
-      - "5432:5432"
-    volumes: 
-      - data:/var/lib/postgresql/data
+  # db: 
+  #   image: postgres:alpine
+  #   restart: always 
+  #   environment: 
+  #     - POSTGRES_PASSWORD=pGdBcrM
+  #     - POSTGRES_DB=pipelines-svc-dev
+  #     - POSTGRES_USER=root
+  #   ports: 
+  #     - "5432:5432"
+  #   volumes: 
+  #     - data:/var/lib/postgresql/data
 volumes:
   data: 

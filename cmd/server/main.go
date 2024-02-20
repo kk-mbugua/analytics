@@ -33,12 +33,12 @@ func loadCertifcate(environment string) credentials.TransportCredentials {
 		log.Printf("Loaded staging certificates %v", creds)
 		return creds
 	case "development":
-		creds, err := credentials.NewServerTLSFromFile("certs/dev/server.crt", "certs/dev/server.key")
-		if err != nil {
-			log.Fatalf("Failed to generate credentials %v", err)
-		}
-		log.Printf("Loaded insecure certificates %v", insecure.NewCredentials())
-		return creds
+		// creds, err := credentials.NewServerTLSFromFile("certs/dev/server.crt", "certs/dev/server.key")
+		// if err != nil {
+		// 	log.Fatalf("Failed to generate credentials %v", err)
+		// }
+		// return creds
+		return insecure.NewCredentials()
 	default:
 		log.Printf("Loaded insecure certificates %v", insecure.NewCredentials())
 		return insecure.NewCredentials()

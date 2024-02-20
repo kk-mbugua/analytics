@@ -27,10 +27,10 @@ type Lead struct {
 
 type LeadCustomFields struct {
 	gorm.Model
-	LeadID      string `gorm:"not null"`
-	FieldID     string `gorm:"not null"`
-	CustomField CustomField
-	Value       string `gorm:"not null"`
+	LeadID        string `gorm:"not null"`
+	CustomFieldID string `gorm:"not null"`
+	CustomField   CustomField
+	Value         string `gorm:"not null"`
 }
 
 type LeadFilters struct {
@@ -42,13 +42,4 @@ type LeadFilters struct {
 	DepartmentID   string
 	TeamID         string
 	ContactID      string
-}
-
-type LeadQualifiers struct {
-	gorm.Model
-	QualifiersName string `gorm:"not null"`
-	QualifiersType string `gorm:"not null"`
-	Value          string `gorm:"not null;default:false"`
-	StageID        string `gorm:"not null"`
-	LeadID         string `gorm:"not null"`
 }

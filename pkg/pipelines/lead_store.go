@@ -92,10 +92,38 @@ func (d *DatabaseLeadStore) MoveLeadToStage(leadID, stageID string) error {
 	// Add the custom fields for the new stage
 	for _, field := range stage.CustomFields {
 		lead.CustomFields = append(lead.CustomFields, LeadCustomFields{
-			LeadID:  leadID,
-			FieldID: field.ID,
-			Value:   "",
+			LeadID:        leadID,
+			CustomFieldID: field.ID,
+			Value:         "",
 		})
+	}
+
+	// Save the lead back to the database
+	if err := d.db.Save(lead).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *DatabaseLeadStore) UpdateLeadCustomFieldValue(leadID, customFieldID, value string) error {
+	// Get the lead from the database
+	lead := &Lead{}
+	if err := d.db.First(lead, leadID).Error; err != nil {
+		return err
+	}
+
+	// Get the custom field from the database
+	field := &CustomField{}
+	if err := d.db.First(field, customFieldID).Error; err != nil {
+		return err
+	}
+
+	// Update the lead's custom field value
+	for i, f := range lead.CustomFields {
+		if f.CustomFieldID == customFieldID {
+			lead.CustomFields[i].Value = value
+		}
 	}
 
 	// Save the lead back to the database

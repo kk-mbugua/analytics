@@ -48,7 +48,7 @@ func InitDB(host string, port string, dbName string, dbUser string, password str
 		handleMigrateError("StageLabel", tx.AutoMigrate(&pipelines.StageLabel{}))
 		handleMigrateError("Leads", tx.AutoMigrate(&pipelines.Lead{}))
 		handleMigrateError("CustomField", tx.AutoMigrate(&pipelines.CustomField{}))
-		handleMigrateError("LeadQualifiers", tx.AutoMigrate(&pipelines.LeadQualifiers{}))
+		handleMigrateError("LeadCustomFields", tx.AutoMigrate(&pipelines.LeadCustomFields{}))
 	}
 	tx.Commit()
 	fmt.Print("Database connected successfully...")

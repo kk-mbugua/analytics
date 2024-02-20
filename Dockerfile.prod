@@ -20,6 +20,8 @@ FROM scratch
 COPY --from=builder ["/build/apiserver", "/"]
 
 COPY --from=builder ["/build/certs/prod", "/certs/prod"]
+COPY --from=builder ["/build/certs/dev", "/certs/dev"]
+COPY --from=builder ["/build/certs/org", "/certs/org"]
 
 # Command to run when starting the container.
 ENTRYPOINT ["/apiserver"]

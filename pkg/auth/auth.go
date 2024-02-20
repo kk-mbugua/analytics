@@ -4,6 +4,7 @@ import (
 	"context"
 	authclient "main/cmd/client"
 	"main/pkg/proto/pb"
+	"os"
 )
 
 type RequestMetadata struct {
@@ -16,12 +17,7 @@ type RequestMetadata struct {
 }
 
 func AuthRequest(ctx context.Context, accessToken string, methodName string) (*RequestMetadata, error) {
-	authClient, err := authclient.NewAuthClient(
-		"localhost:50050",
-		"certs/client/server.crt",
-		"certs/client/server.key",
-		"certs/ca/server.crt",
-	)
+	authClient, err := authclient.NewAuthClient(os.Getenv("AUTH_SVC_URL"))
 	if err != nil {
 		return nil, err
 	}
