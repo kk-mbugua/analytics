@@ -1,5 +1,10 @@
 package config
 
+/*
+This file is used to define the configuration for the service.
+
+*/
+
 import (
 	"log"
 	"os"

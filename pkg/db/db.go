@@ -3,7 +3,6 @@ package db
 import (
 	"fmt"
 	"log"
-	"main/pkg/pipelines"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -12,7 +11,7 @@ import (
 var DB *gorm.DB
 var err error
 
-func handleMigrateError(modelName string, err error) {
+func HandleMigrateError(modelName string, err error) {
 	if err != nil {
 		log.Fatalf("Failed to auto migrate %s database: %v", modelName, err)
 	}
@@ -40,15 +39,9 @@ func InitDB(host string, port string, dbName string, dbUser string, password str
 		}
 	}()
 	tx.Debug()
-	// Migrate the schema
 	if false {
-		handleMigrateError("Pipelines", tx.AutoMigrate(&pipelines.Pipeline{}))
-		handleMigrateError("Stages", tx.AutoMigrate(&pipelines.Stage{}))
-		handleMigrateError("StageLabels", tx.AutoMigrate(&pipelines.StageLabel{}))
-		handleMigrateError("StageLabel", tx.AutoMigrate(&pipelines.StageLabel{}))
-		handleMigrateError("Leads", tx.AutoMigrate(&pipelines.Lead{}))
-		handleMigrateError("CustomField", tx.AutoMigrate(&pipelines.CustomField{}))
-		handleMigrateError("LeadCustomFields", tx.AutoMigrate(&pipelines.LeadCustomFields{}))
+		// Handle Schema Migrations Here for each model eg. handleMigrateError("Pipeline", tx.AutoMigrate(&pipelines.Pipeline{}))
+		log.Printf("Migrating Pipeline")
 	}
 	tx.Commit()
 	fmt.Print("Database connected successfully...")

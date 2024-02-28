@@ -6,8 +6,7 @@ import (
 	"main/cmd/server/config"
 	"main/pkg/auth"
 	"main/pkg/db"
-	pipelines "main/pkg/pipelines"
-	"main/pkg/proto/pb"
+
 	"net"
 
 	"google.golang.org/grpc"
@@ -18,26 +17,21 @@ import (
 
 func loadCertifcate(environment string) credentials.TransportCredentials {
 	switch environment {
-	case "production":
-		creds, err := credentials.NewServerTLSFromFile("certs/prod/cert.pem", "certs/prod/key.pem")
-		if err != nil {
-			log.Fatalf("Failed to generate credentials %v", err)
-		}
-		log.Printf("Loaded production certificates %v", creds)
-		return creds
-	case "staging":
-		creds, err := credentials.NewServerTLSFromFile("certs/staging/cert.pem", "certs/staging/key.pem")
-		if err != nil {
-			log.Fatalf("Failed to generate credentials %v", err)
-		}
-		log.Printf("Loaded staging certificates %v", creds)
-		return creds
+	// case "production":
+	// 	creds, err := credentials.NewServerTLSFromFile("certs/prod/cert.pem", "certs/prod/key.pem")
+	// 	if err != nil {
+	// 		log.Fatalf("Failed to generate credentials %v", err)
+	// 	}
+	// 	log.Printf("Loaded production certificates %v", creds)
+	// 	return creds
+	// case "staging":
+	// 	creds, err := credentials.NewServerTLSFromFile("certs/staging/cert.pem", "certs/staging/key.pem")
+	// 	if err != nil {
+	// 		log.Fatalf("Failed to generate credentials %v", err)
+	// 	}
+	// 	log.Printf("Loaded staging certificates %v", creds)
+	// 	return creds
 	case "development":
-		// creds, err := credentials.NewServerTLSFromFile("certs/dev/server.crt", "certs/dev/server.key")
-		// if err != nil {
-		// 	log.Fatalf("Failed to generate credentials %v", err)
-		// }
-		// return creds
 		return insecure.NewCredentials()
 	default:
 		log.Printf("Loaded insecure certificates %v", insecure.NewCredentials())
@@ -63,15 +57,10 @@ func main() {
 
 	certificates := loadCertifcate(configurations.Environment)
 
-	pipelineStore := pipelines.NewDatabasePipelineStore(db.DB)
-	stageStore := pipelines.NewDatabasePipelineStageStore(db.DB)
-	stageLabelStore := pipelines.NewDatabaseStageLabelStore(db.DB)
-	leadStore := pipelines.NewDatabaseLeadStore(db.DB)
-
-	pipelinesServer := pipelines.NewPipelineServer(pipelineStore)
-	pipelineStagesServer := pipelines.NewPipelineStageServer(stageStore)
-	pipelineStageLabelsServer := pipelines.NewStageLabelServer(stageLabelStore)
-	leadServer := pipelines.NewLeadServer(leadStore)
+	/*
+		•	Instantiate the Gorm Stores here
+		•	Instantiate the gRPC service servers and pass the stores as arguments
+	*/
 
 	interceptor := auth.NewAuthInterceptor()
 
@@ -82,10 +71,13 @@ func main() {
 	)
 	reflection.Register(grpcServer)
 
-	pb.RegisterPipelineServiceServer(grpcServer, pipelinesServer)
-	pb.RegisterPipelineStageServiceServer(grpcServer, pipelineStagesServer)
-	pb.RegisterStageLabelServiceServer(grpcServer, pipelineStageLabelsServer)
-	pb.RegisterLeadServiceServer(grpcServer, leadServer)
+	/*
+
+		•	Register the gRPC service servers here
+		•	For example:
+		•	pb.RegisterYourServiceServer(grpcServer, &services.YourServiceServer{YourServiceStore})
+
+	*/
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", configurations.Port))
 	if err != nil {

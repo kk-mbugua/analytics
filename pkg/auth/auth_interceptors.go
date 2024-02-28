@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"log"
 
 	"google.golang.org/grpc"
 )
@@ -30,16 +29,21 @@ func (interceptor *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		log.Println("--> unary interceptor: ", info.FullMethod)
-		requestMetadata, err := AuthRequest(ctx, "accessToken", info.FullMethod)
-		if err != nil {
-			return nil, err
-		}
-		ctx = context.WithValue(ctx, UserID, requestMetadata.UserID)
-		ctx = context.WithValue(ctx, OrganisationID, requestMetadata.OrganisationID)
-		ctx = context.WithValue(ctx, Authorization, requestMetadata.Authorization)
-		ctx = context.WithValue(ctx, RequestAuth, requestMetadata.RequestAuth)
-		ctx = context.WithValue(ctx, BranchID, requestMetadata.BranchID)
+		/*
+
+			Uncomment the following code and add the necessary protobuf configuration :: Read the README.md for more information
+
+		*/
+		// log.Println("--> unary interceptor: ", info.FullMethod)
+		// requestMetadata, err := AuthRequest(ctx, "accessToken", info.FullMethod)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// ctx = context.WithValue(ctx, UserID, requestMetadata.UserID)
+		// ctx = context.WithValue(ctx, OrganisationID, requestMetadata.OrganisationID)
+		// ctx = context.WithValue(ctx, Authorization, requestMetadata.Authorization)
+		// ctx = context.WithValue(ctx, RequestAuth, requestMetadata.RequestAuth)
+		// ctx = context.WithValue(ctx, BranchID, requestMetadata.BranchID)
 		return handler(ctx, req)
 	}
 }
