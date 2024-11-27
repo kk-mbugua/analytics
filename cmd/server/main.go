@@ -3,9 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
-	"main/cmd/server/config"
-	"main/pkg/auth"
-	"main/pkg/db"
+	"analytics/cmd/server/config"
+	"analytics/pkg/auth"
 
 	"net"
 
@@ -13,6 +12,9 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
+
+	"analytics/pkg/pb"
+    "analytics/pkg/services"
 )
 
 func loadCertifcate(environment string) credentials.TransportCredentials {
@@ -45,13 +47,13 @@ func main() {
 		log.Fatalln("Failed at config", err)
 	}
 
-	db.InitDB(
-		configurations.PostgresHost,
-		configurations.PostgresPort,
-		configurations.PostgresDB,
-		configurations.PostgresUser,
-		configurations.PostgresPass,
-	)
+	// db.InitDB(
+	// 	configurations.PostgresHost,
+	// 	configurations.PostgresPort,
+	// 	configurations.PostgresDB,
+	// 	configurations.PostgresUser,
+	// 	configurations.PostgresPass,
+	// )
 
 	log.Printf("Starting server on port %v\n", configurations.Port)
 
@@ -78,6 +80,9 @@ func main() {
 		•	pb.RegisterYourServiceServer(grpcServer, &services.YourServiceServer{YourServiceStore})
 
 	*/
+	schemaService := &services.SchemaServiceServer{}
+	pb.RegisterSchemaServiceServer(grpcServer, schemaService)
+
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", configurations.Port))
 	if err != nil {
