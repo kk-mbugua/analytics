@@ -124,6 +124,18 @@ func convertColumns(columns []database.ColumnInfo) []*pb.ColumnInfo {
     return pbColumns
 }
 
+// extractColumnsFromCSV parses CSV data and returns the column names
+func extractColumnsFromCSV(csvData []byte) ([]string, error) {
+    reader := csv.NewReader(bytes.NewReader(csvData))
+
+    // Read the first line of the CSV (header)
+    header, err := reader.Read()
+    if err != nil {
+        return nil, err
+    }
+
+    return header, nil
+}
 
 // UploadCsv handles CSV file uploads via gRPC streaming
 func (s *SchemaServiceServer) UploadCsv(stream pb.SchemaService_UploadCsvServer) error {
@@ -139,9 +151,16 @@ func (s *SchemaServiceServer) UploadCsv(stream pb.SchemaService_UploadCsvServer)
                 return err
             }
 
-            // Return the columns as the response
+            // Parse the rows data from CSV file
+            rows, err := extractRowsFromCSV(buffer.Bytes(), columns)
+            if err != nil {
+                return err
+            }
+
+            // Return the columns and rows as the response
             return stream.SendAndClose(&pb.CsvResponse{
-                Columns: columns,
+                Columns: columns, // Return columns
+                Rows:    rows,    // Return rows
             })
         }
         if err != nil {
@@ -153,16 +172,78 @@ func (s *SchemaServiceServer) UploadCsv(stream pb.SchemaService_UploadCsvServer)
     }
 }
 
-// extractColumnsFromCSV parses CSV data and returns the column names
-func extractColumnsFromCSV(csvData []byte) ([]string, error) {
+// extractRowsFromCSV parses the CSV data and returns the rows
+func extractRowsFromCSV(csvData []byte, columns []string) ([]*pb.RowData, error) {
     reader := csv.NewReader(bytes.NewReader(csvData))
 
-    // Read the first line of the CSV (header)
-    header, err := reader.Read()
-    if err != nil {
-        return nil, err
+    // Read all rows of the CSV data
+    var rows []*pb.RowData
+    for {
+        record, err := reader.Read()
+        if err == io.EOF {
+            break
+        }
+        if err != nil {
+            return nil, err
+        }
+
+        // Map each row's column value to a corresponding Column name
+        rowData := &pb.RowData{Columns: make(map[string]string)}
+        for i, value := range record {
+            if i < len(columns) {
+                rowData.Columns[columns[i]] = value
+            }
+        }
+        rows = append(rows, rowData)
     }
 
-    return header, nil
+    return rows, nil
 }
 
+// GetFilteredCsvData filters CSV data based on requested columns and row limits
+func (s *SchemaServiceServer) GetFilteredCsvData(ctx context.Context, req *pb.CsvRequest) (*pb.CsvResponse, error) {
+	reader := csv.NewReader(bytes.NewReader(req.ChunkData))
+	rows, err := reader.ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse CSV data: %w", err)
+	}
+
+	if len(rows) == 0 {
+		return nil, fmt.Errorf("CSV file is empty")
+	}
+
+	// Extract header
+	header := rows[0]
+	columnIndices := make(map[string]int)
+	for i, col := range header {
+		columnIndices[col] = i
+	}
+
+	// Filter columns
+	filteredHeader := []string{}
+	for _, col := range req.Columns {
+		if _, exists := columnIndices[col]; exists {
+			filteredHeader = append(filteredHeader, col)
+		} else {
+			return nil, fmt.Errorf("column %s not found in CSV", col)
+		}
+	}
+
+	// Filter rows
+	filteredRows := []*pb.RowData{}
+	for i, row := range rows[1:] { // Skip header
+		if req.RowLimit > 0 && i >= int(req.RowLimit) {
+			break
+		}
+		filteredRow := &pb.RowData{Columns: make(map[string]string)}
+		for _, col := range req.Columns {
+			filteredRow.Columns[col] = row[columnIndices[col]]
+		}
+		filteredRows = append(filteredRows, filteredRow)
+	}
+
+	return &pb.CsvResponse{
+		Columns: filteredHeader,
+		Rows:    filteredRows,
+	}, nil
+}
