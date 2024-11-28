@@ -21,7 +21,7 @@ func main() {
 	client := pb.NewSchemaServiceClient(conn)
 
 	// Load a test CSV file
-	csvFile := "test.csv"
+	csvFile := "/Users/work/dev/cigona/dail_afrika/analytics/da-ms-template/pkg/services/client_test/csv/test.csv"
 	csvData, err := os.ReadFile(csvFile)
 	if err != nil {
 		log.Fatalf("Failed to read CSV file: %v", err)
